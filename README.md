@@ -1,0 +1,2 @@
+# nirc
+Nim IRC Client
