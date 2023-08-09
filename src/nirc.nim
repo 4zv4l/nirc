@@ -15,7 +15,7 @@ proc newIRC*(server: string, port: uint32 = 6667, channel, nickname: string): IR
 
 proc send(self: IRC, msg: string) =
   self.conn.send(msg & "\n")
-  info &"Send: {msg}"
+  debug &"Send: {msg}"
 
 proc sendMsg*(self: IRC, text: string) =
   let msg = &"PRIVMSG {self.channel} :{text}"
@@ -26,7 +26,7 @@ proc recv(self: IRC): string =
   if result == "": quit("connection closed")
   debug &"Recv: {result}"
   if result.startsWith(re"PING"):
-    info &"Recv: {result}"
+    debug &"Recv: {result}"
     self.send(&"PONG {result.split[1][0..^1]}")
 
 iterator recvMsg*(self: IRC): (string, string) =
@@ -34,7 +34,7 @@ iterator recvMsg*(self: IRC): (string, string) =
   while (let line = self.recv(); line != ""):
     if line.match(re &":(?P<user>.+)!.+PRIVMSG {self.channel} :(?P<msg>.+)", m):
       let (user, msg) = (m.group("user", line)[0], m.group("msg", line)[0])
-      info &"Recv: {user} PRIVMSG {self.channel} :{msg}"
+      debug &"Recv: {user} PRIVMSG {self.channel} :{msg}"
       yield (user, msg)
 
 proc connect*(self: IRC) =
@@ -44,6 +44,7 @@ proc connect*(self: IRC) =
   self.send(&"NICK {self.nickname}")
   while not self.recv().contains("MODE"): discard
   self.send(&"JOIN {self.channel}")
+  info &"Connected to {self.server}:{self.port}{self.channel}"
 
 proc disconnect*(self: IRC) =
   self.conn.close
